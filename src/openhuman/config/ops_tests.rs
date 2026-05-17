@@ -167,6 +167,30 @@ fn set_browser_allow_all_toggles_env_var() {
     }
 }
 
+#[test]
+fn set_browser_allow_all_is_blocked_in_enterprise_profile() {
+    let _g = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let before_allow_all = std::env::var("OPENHUMAN_BROWSER_ALLOW_ALL").ok();
+    let before_profile = std::env::var("OPENHUMAN_SECURITY_PROFILE").ok();
+
+    unsafe {
+        std::env::set_var("OPENHUMAN_SECURITY_PROFILE", "enterprise");
+    }
+    let _ = set_browser_allow_all(true);
+    assert!(!env_flag_enabled("OPENHUMAN_BROWSER_ALLOW_ALL"));
+
+    unsafe {
+        match before_allow_all {
+            Some(v) => std::env::set_var("OPENHUMAN_BROWSER_ALLOW_ALL", v),
+            None => std::env::remove_var("OPENHUMAN_BROWSER_ALLOW_ALL"),
+        }
+        match before_profile {
+            Some(v) => std::env::set_var("OPENHUMAN_SECURITY_PROFILE", v),
+            None => std::env::remove_var("OPENHUMAN_SECURITY_PROFILE"),
+        }
+    }
+}
+
 // ── snapshot_config_json ───────────────────────────────────────
 
 #[test]

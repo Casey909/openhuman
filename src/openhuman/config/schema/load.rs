@@ -78,6 +78,12 @@ fn parse_env_bool(name: &str, raw: &str) -> Option<bool> {
     }
 }
 
+fn security_profile_enterprise_from_env<E: EnvLookup + ?Sized>(env: &E) -> bool {
+    env.get("OPENHUMAN_SECURITY_PROFILE")
+        .map(|value| value.trim().eq_ignore_ascii_case("enterprise"))
+        .unwrap_or(false)
+}
+
 const ACTIVE_WORKSPACE_STATE_FILE: &str = "active_workspace.toml";
 static WARNED_WORLD_READABLE_CONFIGS: OnceLock<Mutex<HashSet<PathBuf>>> = OnceLock::new();
 
@@ -1419,6 +1425,12 @@ impl Config {
             {
                 self.update.rpc_mutations_enabled = enabled;
             }
+        }
+        if security_profile_enterprise_from_env(env) && self.update.rpc_mutations_enabled {
+            tracing::warn!(
+                "OPENHUMAN_SECURITY_PROFILE=enterprise forces config.update.rpc_mutations_enabled=false"
+            );
+            self.update.rpc_mutations_enabled = false;
         }
 
         // Dictation overrides

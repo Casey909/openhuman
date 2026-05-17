@@ -7,7 +7,8 @@ use tokio_util::sync::CancellationToken;
 
 use super::{
     build_http_schema_dump, default_state, escape_html, invoke_method, is_param_validation_error,
-    is_session_expired_error, params_to_object, parse_json_params, rpc_handler, type_name,
+    is_loopback_bind_host, is_session_expired_error, non_loopback_bind_allowed, params_to_object,
+    parse_json_params, rpc_handler, security_profile_enterprise, type_name,
 };
 
 struct EnvVarGuard {
@@ -76,6 +77,27 @@ async fn wait_until_port_released(port: u16) {
         );
         tokio::time::sleep(Duration::from_millis(25)).await;
     }
+}
+
+#[test]
+fn loopback_bind_host_detection_covers_common_hosts() {
+    assert!(is_loopback_bind_host("127.0.0.1"));
+    assert!(is_loopback_bind_host("::1"));
+    assert!(is_loopback_bind_host("localhost"));
+    assert!(is_loopback_bind_host("api.localhost"));
+    assert!(!is_loopback_bind_host("0.0.0.0"));
+    assert!(!is_loopback_bind_host("192.168.1.10"));
+    assert!(!is_loopback_bind_host("example.com"));
+}
+
+#[test]
+fn security_bind_env_flags_are_parsed() {
+    let _g = EnvVarGuard::set_many(vec![
+        ("OPENHUMAN_CORE_ALLOW_NON_LOOPBACK", OsString::from("1")),
+        ("OPENHUMAN_SECURITY_PROFILE", OsString::from("enterprise")),
+    ]);
+    assert!(non_loopback_bind_allowed());
+    assert!(security_profile_enterprise());
 }
 
 /// Regression test for issue #920 — the embedded server's `axum::serve`

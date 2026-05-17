@@ -51,7 +51,7 @@ fn default_update_interval_minutes() -> u32 {
 }
 
 fn default_rpc_mutations_enabled() -> bool {
-    true
+    false
 }
 
 impl Default for UpdateConfig {

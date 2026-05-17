@@ -844,6 +844,17 @@ fn env_overlay_auto_update_rpc_mutations_enabled_parses_bool() {
 }
 
 #[test]
+fn env_overlay_enterprise_profile_forces_rpc_mutations_disabled() {
+    let mut cfg = Config::default();
+    cfg.apply_env_overlay_with(
+        &HashMapEnv::new()
+            .with("OPENHUMAN_AUTO_UPDATE_RPC_MUTATIONS_ENABLED", "true")
+            .with("OPENHUMAN_SECURITY_PROFILE", "enterprise"),
+    );
+    assert!(!cfg.update.rpc_mutations_enabled);
+}
+
+#[test]
 fn env_overlay_empty_lookup_leaves_defaults_intact() {
     // The seam with no env entries should be a no-op on a fresh Config.
     let mut cfg = Config::default();

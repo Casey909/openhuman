@@ -17,6 +17,12 @@ fn env_flag_enabled(key: &str) -> bool {
     )
 }
 
+fn enterprise_security_profile_enabled() -> bool {
+    std::env::var("OPENHUMAN_SECURITY_PROFILE")
+        .ok()
+        .is_some_and(|value| value.trim().eq_ignore_ascii_case("enterprise"))
+}
+
 /// Returns the core RPC URL from environment variables or a default value.
 pub fn core_rpc_url_from_env() -> String {
     std::env::var("OPENHUMAN_CORE_RPC_URL")
@@ -819,7 +825,12 @@ pub fn get_runtime_flags() -> RpcOutcome<RuntimeFlagsOut> {
 
 /// Updates the `OPENHUMAN_BROWSER_ALLOW_ALL` environment flag.
 pub fn set_browser_allow_all(enabled: bool) -> RpcOutcome<RuntimeFlagsOut> {
-    if enabled {
+    if enabled && enterprise_security_profile_enabled() {
+        std::env::remove_var("OPENHUMAN_BROWSER_ALLOW_ALL");
+        log::warn!(
+            "[config] refusing to enable OPENHUMAN_BROWSER_ALLOW_ALL while OPENHUMAN_SECURITY_PROFILE=enterprise"
+        );
+    } else if enabled {
         std::env::set_var("OPENHUMAN_BROWSER_ALLOW_ALL", "1");
     } else {
         std::env::remove_var("OPENHUMAN_BROWSER_ALLOW_ALL");

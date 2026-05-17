@@ -744,6 +744,35 @@ fn core_host() -> String {
         .unwrap_or_else(|| "127.0.0.1".to_string())
 }
 
+fn env_flag_enabled(key: &str) -> bool {
+    matches!(
+        std::env::var(key).ok().as_deref(),
+        Some("1") | Some("true") | Some("TRUE") | Some("yes") | Some("YES")
+    )
+}
+
+pub(crate) fn security_profile_enterprise() -> bool {
+    std::env::var("OPENHUMAN_SECURITY_PROFILE")
+        .ok()
+        .map(|v| v.trim().eq_ignore_ascii_case("enterprise"))
+        .unwrap_or(false)
+}
+
+pub(crate) fn is_loopback_bind_host(host: &str) -> bool {
+    let trimmed = host.trim();
+    if trimmed.eq_ignore_ascii_case("localhost") || trimmed.ends_with(".localhost") {
+        return true;
+    }
+    trimmed
+        .parse::<std::net::IpAddr>()
+        .map(|ip| ip.is_loopback())
+        .unwrap_or(false)
+}
+
+pub(crate) fn non_loopback_bind_allowed() -> bool {
+    env_flag_enabled("OPENHUMAN_CORE_ALLOW_NON_LOOPBACK")
+}
+
 /// Runs the HTTP/JSON-RPC server.
 ///
 /// This function binds to the specified host and port, initializes the router,
@@ -862,6 +891,18 @@ async fn run_server_inner(
 
     let port = resolved_port;
     let host = resolved_host;
+    if !is_loopback_bind_host(&host) {
+        if security_profile_enterprise() {
+            anyhow::bail!(
+                "Refusing non-loopback bind host '{host}' while OPENHUMAN_SECURITY_PROFILE=enterprise"
+            );
+        }
+        if !non_loopback_bind_allowed() {
+            anyhow::bail!(
+                "Refusing non-loopback bind host '{host}'. Set OPENHUMAN_CORE_ALLOW_NON_LOOPBACK=1 to allow explicit remote binding."
+            );
+        }
+    }
     let bind_addr = format!("{host}:{port}");
     let listener = tokio::net::TcpListener::bind((host.as_str(), port))
         .await

@@ -68,9 +68,6 @@ for the JSON shaping. Missing tools are skipped with a note in the report.
 
 ## Intentionally out of scope for the first cut
 
-- npm audit: Yarn v1's `audit` output is messy and noisy; revisit when the
-  project moves to Yarn berry or adopts `audit-ci` / GitHub's dependency
-  review action.
 - Bundle-size diff: needs a baseline to be meaningful; separate workflow.
 - AI-assisted review: CodeRabbit already runs per-PR; duplicating weekly
   would be noise, not signal.

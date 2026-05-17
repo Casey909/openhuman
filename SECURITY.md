@@ -50,4 +50,9 @@ We support safe harbor for security researchers who report in good faith. We wil
 - **Data**: Message content is processed on request and not retained for training or long-term storage.
 - **Skills**: Skills run in a sandboxed environment with defined boundaries; we review skill behavior and dependencies where possible.
 
+## Enterprise Hardening References
+
+- Baseline controls: [`docs/security/security-baseline.md`](docs/security/security-baseline.md)
+- Deployment checklist: [`docs/security/secure-deployment-checklist.md`](docs/security/secure-deployment-checklist.md)
+
 Thank you for helping keep OpenHuman and its users safe.
