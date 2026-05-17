@@ -312,6 +312,18 @@ fn browser_tool_empty_allowlist_allows_with_env_flag() {
 }
 
 #[test]
+fn browser_tool_enterprise_profile_ignores_allow_all_flag() {
+    let _guard = BROWSER_ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let security = Arc::new(SecurityPolicy::default());
+    let tool = BrowserTool::new(security, vec![], None);
+    std::env::set_var("OPENHUMAN_BROWSER_ALLOW_ALL", "1");
+    std::env::set_var("OPENHUMAN_SECURITY_PROFILE", "enterprise");
+    assert!(tool.validate_url("https://example.com").is_err());
+    std::env::remove_var("OPENHUMAN_SECURITY_PROFILE");
+    std::env::remove_var("OPENHUMAN_BROWSER_ALLOW_ALL");
+}
+
+#[test]
 fn computer_use_only_action_detection_is_correct() {
     assert!(is_computer_use_only_action("mouse_move"));
     assert!(is_computer_use_only_action("mouse_click"));

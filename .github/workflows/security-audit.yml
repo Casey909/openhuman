@@ -1,0 +1,48 @@
+name: Security Audit
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rust-audit:
+    name: Rust advisories (cargo-audit)
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/tinyhumansai/openhuman_ci:rust-1.93.0
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+          submodules: recursive
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@cargo-audit
+      - name: Audit root Cargo.lock
+        run: cargo audit
+      - name: Audit Tauri Cargo.lock
+        working-directory: app/src-tauri
+        run: cargo audit
+
+  js-audit:
+    name: JS advisories (pnpm audit high+)
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/tinyhumansai/openhuman_ci:rust-1.93.0
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Audit workspace dependencies
+        run: pnpm audit --audit-level=high
+      - name: Audit app workspace dependencies
+        working-directory: app
+        run: pnpm audit --audit-level=high
